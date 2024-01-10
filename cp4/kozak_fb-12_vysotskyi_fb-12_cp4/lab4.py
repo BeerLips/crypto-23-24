@@ -217,6 +217,12 @@ if __name__ == "__main__":
     print(f"B підписав повідомлення, і отримал S={m_signed_by_b[1]}")
     print(f"A перевірив підпис з результатом {verify(m_signed_by_b, public_key_b)}")
 
+    print()
+
     k = randint(1, p*q-1)
     print(f"A згенерував певний ключ k={k}")
+    key_message = send_key(k, private_key_a, public_key_b)
+    print(f"А зформував повідомлення (k1, S1)={key_message}")
+    key = receive_key(key_message, private_key_b, public_key_a)
+    print(f"B отримав повідомлення, після чого знайшов і перевірив ключ k={key}")
 
