@@ -1,187 +1,158 @@
 import math
 import random
 
+# Функція для перевірки чи число є простим за алгоритмом Міллера-Рабіна
+def is_prime(n, k=5):
+    if n <= 1 or n == 4:
+        return False
+    if n <= 3:
+        return True
 
-def generate_prime_number(bits):
-    def get_random_number(bits):
-        return random.randint(2 ** bits, 2 ** (bits + 1) - 1)
+    # Знайдемо d, таке що n = 2^r * d + 1
+    d = n - 1
+    while d % 2 == 0:
+        d //= 2
 
-    def test_miller_rabin(p):
-        if p % 2 == 0 or p % 3 == 0 or p % 5 == 0 or p % 7 == 0 or p % 11 == 0:
-            print(p, 'not prime')
+    # Перевірка простоти за допомогою k тестів Міллера-Рабіна
+    for _ in range(k):
+        if not miller_rabin_test(d, n):
             return False
+    return True
 
-        s, d = 0, p - 1
+# Тест Міллера-Рабіна для одного свідчення
+def miller_rabin_test(d, n):
+    a = 2 + random.randint(1, n - 4)
+    x = pow(a, d, n)
 
-        while d % 2 == 0:
-            d //= 2
-            s += 1
-        assert (p - 1 == d * (2 ** s))
+    if x == 1 or x == n - 1:
+        return True
 
-        x = random.randint(2, p - 2)
+    while d != n - 1:
+        x = (x * x) % n
+        d *= 2
 
-        if math.gcd(x, p) > 1:
-            print(p, 'not prime')
+        if x == 1:
             return False
-
-        if pow(x, d, p) == 1 or pow(x, d, p) == -1:
+        if x == n - 1:
             return True
 
-        for _ in range(1, s - 1):
-            x = (x * x) % p
-            if x == -1:
-                return True
-            if x == 1:
-                print(p, 'not prime')
-                return False
-        print(p, 'not prime')
-        return False
+    return False
 
-    num = get_random_number(bits)
-    while not test_miller_rabin(num):
-        num = get_random_number(bits)
-    print("Find prime")
-    print(num)
-    return num
+# Генерація випадкового простого числа заданої бітності
+def generate_prime(bits):
+    while True:
+        num = random.getrandbits(bits)
+        if is_prime(num):
+            print(f"Generated prime number: {num} (Bits: {bits})")
+            return num
 
+# Генерація пари публічного та приватного ключів
+def generate_key_pair(bits):
+    p = generate_prime(bits)
+    q = generate_prime(bits)
+    n = p * q
+    phi = (p - 1) * (q - 1)
 
-def get_pair(bits):
-    pair = (generate_prime_number(bits), generate_prime_number(bits))
-    return pair
+    e = 65537  # Вибір значення e (зазвичай фіксоване)
+    d = pow(e, -1, phi)
 
+    return ((n, e), (d, p, q))  # Повертаємо публічний та приватний ключі
 
-def generate_keys(pair):
-    n = pair[0] * pair[1]
-    f = (pair[0] - 1) * (pair[1] - 1)
-    e = 2**16 + 1
-    d = pow(e, -1, f)
-    open_key = (n, e)
-    secret_key = (d, pair[0], pair[1])
-    return open_key, secret_key
+# Шифрування повідомлення за допомогою публічного ключа
+def encrypt(message, public_key):
+    n, e = public_key
+    return pow(message, e, n)
 
+# Дешифрування повідомлення за допомогою приватного ключа
+def decrypt(ciphertext, private_key):
+    d, p, q = private_key
+    return pow(ciphertext, d, p * q)
 
-def encrypt(message, key):
-    encrypted_message = pow(message, key[0][1], key[0][0])
-    return encrypted_message
+# Створення підпису за допомогою приватного ключа
+def sign(message, private_key):
+    d, p, q = private_key
+    return pow(message, d, p * q)
 
+# Перевірка підпису за допомогою публічного ключа
+def verify(signature, message, public_key):
+    n, e = public_key
+    return pow(signature, e, n) == message
 
-def sign(message, key):
-    signed_message = (message, pow(message, key[1][0], key[0][0]))
-    return signed_message
+# Реалізація протоколу обміну ключами
+def send_key(key, sender_private_key, receiver_public_key):
+    encrypted_key = encrypt(key, receiver_public_key)
+    signature = sign(key, sender_private_key)
+    return encrypted_key, signature
 
-
-def decrypt(encrypted, key):
-    decrypted_message = pow(encrypted, key[1][0], key[0][0])
-    return decrypted_message
-
-
-def verify(signed, message, key):
-    if message == pow(signed, key[0][1], key[0][0]):
-        print('Message Confirmed')
+def receive_key(encrypted_key, signature, receiver_private_key, sender_public_key):
+    decrypted_key = decrypt(encrypted_key, receiver_private_key)
+    if verify(signature, decrypted_key, sender_public_key):
+        return decrypted_key
     else:
-        print('Message Declined')
+        return None
 
-def eye_painkiller():
-    print('* ￣へ￣ *')
+# Приклади використання функцій
+# Генерація ключів для двох користувачів A та B
+key_pair_A = generate_key_pair(256)
+key_pair_B = generate_key_pair(256)
 
+# Зашифроване та розшифроване повідомлення, підпис та перевірка підпису
+message = random.randint(0, key_pair_B[0][0])
+encrypted_message = encrypt(message, key_pair_B[0])
+decrypted_message = decrypt(encrypted_message, key_pair_B[1])
+signature = sign(message, key_pair_A[1])
+verification_result = verify(signature, message, key_pair_A[0])
 
-s = get_pair(256)
-r = get_pair(256)
+# Обмін ключами між A та B
+shared_key = random.randint(0, key_pair_B[0][0])
+encrypted_key, signature = send_key(shared_key, key_pair_A[1], key_pair_B[0])
+received_key = receive_key(encrypted_key, signature, key_pair_B[1], key_pair_A[0])
 
-while s[0] * s[1] > r[0] * r[1]:
-    s = get_pair(256)
-    r = get_pair(256)
+# Генерація пар ключів для двох сутностей A та B
+print("Generating key pairs for A and B...")
+key_pair_A = generate_key_pair(256)
+key_pair_B = generate_key_pair(256)
 
-s_key = generate_keys(s)
-r_key = generate_keys(r)
+# Виведення публічних і приватних ключів у шістнадцятковому форматі
+print(f"Entity A's Public Key: {key_pair_A[0]} (Hex: {key_pair_A[0][0]:x}, {key_pair_A[0][1]:x})")
+print(f"Entity A's Private Key: {key_pair_A[1]} (Hex: {key_pair_A[1][0]:x}, {key_pair_A[1][1]:x}, {key_pair_A[1][2]:x})")
+print(f"Entity B's Public Key: {key_pair_B[0]} (Hex: {key_pair_B[0][0]:x}, {key_pair_B[0][1]:x})")
+print(f"Entity B's Private Key: {key_pair_B[1]} (Hex: {key_pair_B[1][0]:x}, {key_pair_B[1][1]:x}, {key_pair_B[1][2]:x})")
 
-s_key_0, s_key_1 = s_key[0]
-r_key_0, r_key_1 = r_key[0]
+message = random.randint(0, key_pair_B[0][0])  # Генерація випадкового повідомлення
+print(f"Original Message: {message} (Hex: {message:x})")
 
-print(f'Sender public and private keys: {s_key_0} ({hex(s_key_0)})\n{s_key_1} ({hex(s_key_1)})')
-print(f'Receiver public and private keys: {r_key_0} ({hex(r_key_0)})\n{r_key_1} ({hex(r_key_1)})')
+encrypted_message = encrypt(message, key_pair_B[0])  # Шифрування публічним ключем B
+print(f"Encrypted Message: {encrypted_message} (Hex: {encrypted_message:x})")
 
-message = random.randint(0, r[0] * r[1])
-#message = 51
-encrypted = encrypt(message, r_key)
-signed_msg, signature = sign(message, s_key)
-s1 = encrypt(signature, r_key)
-final_message = (encrypted, s1)
+decrypted_message = decrypt(encrypted_message, key_pair_B[1])  # Дешифрування приватним ключем B
+print(f"Decrypted Message: {decrypted_message} (Hex: {decrypted_message:x})")
 
-decrypted = decrypt(final_message[0], r_key)
-decrypted_sign = decrypt(final_message[1], r_key)
+signature = sign(message, key_pair_A[1])  # Підпис повідомлення сутністю A
+print(f"Signature: {signature} (Hex: {signature:x})")
 
-print(f'Original message: {message} ({hex(message)})')
-eye_painkiller()
-print(f'Signed message: {signed_msg} ({hex(signed_msg)})')
-eye_painkiller()
-print(f'Final encrypted message: {final_message} ({hex(final_message[0])}, {hex(final_message[1])})')
-eye_painkiller()
-print(f'Decrypted message: {decrypted} ({hex(decrypted)})')
-eye_painkiller()
-print(f'Decrypted sign: {decrypted_sign} ({hex(decrypted_sign)})')
-print(verify)
+verification_result = verify(signature, message, key_pair_A[0])  # Перевірка підпису A
+print(f"Verification Result: {'Successful' if verification_result else 'Failed'}")
 
+# Тест 1: Перевірка підпису
+print("//////////////test 1 verify")
+print(f"Original Message (Hex): {message:x}")
+print(f"Signature (Hex): {signature:x}")
+print(f"Sender Modulus (Hex): {key_pair_A[0][0]:x}")
+print(f"Public Exponent (Hex): {key_pair_A[0][1]:x}")
 
+# Тест шифрування
+print("Encryption Test")
+print(f"Modulus (Hex): {key_pair_B[0][0]:x}")
+print(f"Public Exponent (Hex): {key_pair_B[0][1]:x}")
+print(f"Message (Hex): {message:x}")
 
-"""
-hexi hoch?
+# Реалізація протоколу обміну ключами
+shared_key = random.randint(0, key_pair_B[0][0])
+print(f"Shared Key: {shared_key} (Hex: {shared_key:x})")
 
-s_key_0, s_key_1 = s_key[0]
-r_key_0, r_key_1 = r_key[0]
+encrypted_key, signature = send_key(shared_key, key_pair_A[1], key_pair_B[0])
+print(f"Encrypted Key: {encrypted_key} (Hex: {encrypted_key:x}), Signature: {signature} (Hex: {signature:x})")
 
-print(f'Sender public and private keys: {s_key_0} ({hex(s_key_0)})\n{s_key_1} ({hex(s_key_1)})')
-print(f'Receiver public and private keys: {r_key_0} ({hex(r_key_0)})\n{r_key_1} ({hex(r_key_1)})')
-
-message = random.randint(0, r[0] * r[1])
-encrypted = encrypt(message, r_key)
-signed_msg, signature = sign(message, s_key)
-s1 = encrypt(signature, r_key)
-final_message = (encrypted, s1)
-
-decrypted = decrypt(final_message[0], r_key)
-decrypted_sign = decrypt(final_message[1], r_key)
-
-print(f'Original message: {message} ({hex(message)})')
-eye_painkiller()
-print(f'Signed message: {signed_msg} ({hex(signed_msg)})')
-eye_painkiller()
-print(f'Final encrypted message: {final_message} ({hex(final_message[0])}, {hex(final_message[1])})')
-eye_painkiller()
-print(f'Decrypted message: {decrypted} ({hex(decrypted)})')
-eye_painkiller()
-print(f'Decrypted sign: {decrypted_sign} ({hex(decrypted_sign)})')
-print(verify)
-
-"""
-
-"""
-hexi ne hoch
-
-print(f'Sender public and private keys: {s_key[0]}\n{s_key[1]}')
-print(f'Receiver public and private keys: {r_key[0]}\n{r_key[1]}')
-
-message = random.randint(0, r[0] * r[1])
-encrypted = encrypt(message, r_key)
-signed = sign(message, s_key)
-s1 = encrypt(signed[1], r_key)
-final_message = (encrypted, s1)
-
-decrypted = decrypt(final_message[0], r_key)
-decrypted_sign = decrypt(final_message[1], r_key)
-
-print(f'Original message: {message}')
-eye_painkiller()
-print(f'Encrypted message: {encrypted}')
-eye_painkiller()
-print(f'Signed message: {signed}')
-eye_painkiller()
-print(f'Encrypted message: {final_message}')
-eye_painkiller()
-print(f'Decrypted message: {decrypted}')
-eye_painkiller()
-print(f'Decrypted sign: {decrypted_sign}')
-print(verify)
-
-
-"""
+received_key = receive_key(encrypted_key, signature, key_pair_B[1], key_pair_A[0])
+print(f"Received Key: {received_key} (Should match Shared Key if verification is successful) (Hex: {received_key:x})")
