@@ -9,12 +9,18 @@ class PrivateKey:
         self.p = p
         self.q = q
 
+    def __repr__(self):
+        return f"d={self.d}, p={self.p}, q={self.q}"
+
 
 class PublicKey:
 
     def __init__(self, n, e):
         self.n = n
         self.e = e
+
+    def __repr__(self):
+        return f"n={self.n}, e={self.e}"
 
 
 def extended_euclid(a, b):   # Розширений алгоритм Евкліда
@@ -110,18 +116,21 @@ def generate_prime_number(lowest: int, highest: int) -> int:
             return p
 
 
-def generate_keys_from_2_prime_numbers(p: int, q: int) -> Tuple[PrivateKey, PublicKey]:
+def generate_keys_from_2_prime_numbers(p: int, q: int, e=2**16+1) -> Tuple[PrivateKey, PublicKey]:
     n = p*q
     euler = (p-1)*(q-1)
 
-    e = 2**16+1
-
     d = mod_inverse(e, euler)
-    return PrivateKey(d, p, q), PublicKey(n, 3)
+    return PrivateKey(d, p, q), PublicKey(n, e)
 
 
 def encrypt(open_text: int, public_key: PublicKey) -> int:
-    encrypted_text = horner_power(open_text, public_key.e, public_key.n)
+    return horner_power(open_text, public_key.e, public_key.n)
+
+
+def decrypt(encrypted_text: int, private_key: PrivateKey) -> int:
+    n = private_key.p * private_key.q
+    return horner_power(encrypted_text, private_key.d, n)
 
 
 def run_tests():
@@ -130,6 +139,7 @@ def run_tests():
     assert distribute_number(100)[1] == 0
     print("distribute_number works fine")
     assert horner_power(10, 2, 101) == 100
+    assert horner_power(4, 7, 451) == 148
     print("horner_power works fine")
     assert test_prime_miller_rabin(3)
     assert not test_prime_miller_rabin(4)
@@ -146,8 +156,17 @@ def run_tests():
     print("test_prime_miller_rabin works fine")
     assert generate_prime_number(2, 5) in (2, 3, 5)
 
+    prk, puk = generate_keys_from_2_prime_numbers(11, 41, 7)
+    print(prk, puk)
+    assert encrypt(4, puk) == 148
 
 
 if __name__ == "__main__":
     run_tests()
     p, q, p1, q1 = sorted([generate_prime_number(2**256, 2**512) for _ in range(4)])
+    private_key, public_key = generate_keys_from_2_prime_numbers(p, q)
+
+    #print(p, q, p*q)
+    print("Guh")
+    print(decrypt(encrypt(9, public_key), private_key))
+
