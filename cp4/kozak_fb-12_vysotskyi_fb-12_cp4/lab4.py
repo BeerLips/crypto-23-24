@@ -168,16 +168,23 @@ def run_tests():
     assert generate_prime_number(2, 5) in (2, 3, 5)
 
     prk, puk = generate_key_pair(11, 41, 7)
-    print(prk, puk)
     assert encrypt(4, puk) == 148
 
 
 if __name__ == "__main__":
     run_tests()
+
     p, q, p1, q1 = sorted([generate_prime_number(2**256, 2**512) for _ in range(4)])
-    private_key, public_key = generate_key_pair(p, q)
+    private_key_a, public_key_a = generate_key_pair(p, q)
+    private_key_b, public_key_b = generate_key_pair(p1, q1)
 
-    #print(p, q, p*q)
-    print("Guh")
-    print(decrypt(encrypt(9, public_key), private_key))
+    m = randint(1, p*q-1)
+    print(f"Згенеровано повідомлення M={m}")
 
+    m_encrypted_by_a = encrypt(m, public_key_b)  # A шифрує за відкритим ключем B
+    print(f"A зашифрував повідомлення відкритим ключем B, і отримав C={m_encrypted_by_a}")
+    print(f"B розшифрував повідомлення своїм закритим ключем і отримав M={decrypt(m_encrypted_by_a, private_key_b)}")
+
+    m_encrypted_by_b = encrypt(m, public_key_a)  # B, навпаки, шифрує за відкритим ключем A
+    print(f"B зашифрував повідомлення відкритим ключем A, і отримав C={m_encrypted_by_b}")
+    print(f"A розшифрував повідомлення своїм закритим ключем і отримав M={decrypt(m_encrypted_by_b, private_key_a)}")
