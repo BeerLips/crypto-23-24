@@ -2,12 +2,36 @@ from random import randint
 from typing import Tuple
 
 
+class PrivateKey:
+
+    def __init__(self, d, p, q):
+        self.d = d
+        self.p = p
+        self.q = q
+
+
+class PublicKey:
+
+    def __init__(self, n, e):
+        self.n = n
+        self.e = e
+
+
 def extended_euclid(a, b):   # Розширений алгоритм Евкліда
     """ Повертає d=НСД(x,y) і x, y такі, що ax + by = d """
     if b == 0:
         return a, 1, 0
     d, x, y = extended_euclid(b, a % b)
     return d, y, x - (a // b) * y
+
+
+def mod_inverse(a, m):
+    """Повертає число, обернене до числа a за модулем m"""
+    gcd, x, y = extended_euclid(a, m)
+    if gcd == 1:
+        return x % m
+    else:
+        return None
 
 
 def decimal_to_binary(a: int) -> str:
@@ -78,8 +102,6 @@ def test_prime_miller_rabin(prime_candidate) -> bool:
         return True
 
 
-
-
 def generate_prime_number(lowest: int, highest: int) -> int:
 
     while True:
@@ -88,7 +110,18 @@ def generate_prime_number(lowest: int, highest: int) -> int:
             return p
 
 
+def generate_keys_from_2_prime_numbers(p: int, q: int) -> Tuple[PrivateKey, PublicKey]:
+    n = p*q
+    euler = (p-1)*(q-1)
 
+    e = 2**16+1
+
+    d = mod_inverse(e, euler)
+    return PrivateKey(d, p, q), PublicKey(n, 3)
+
+
+def encrypt(open_text: int, public_key: PublicKey) -> int:
+    encrypted_text = horner_power(open_text, public_key.e, public_key.n)
 
 
 def run_tests():
@@ -109,9 +142,12 @@ def run_tests():
     assert test_prime_miller_rabin(17461204521323)
     assert test_prime_miller_rabin(28871271685163)
     assert test_prime_miller_rabin(53982894593057)
+    assert test_prime_miller_rabin(2**16+1)
     print("test_prime_miller_rabin works fine")
+    assert generate_prime_number(2, 5) in (2, 3, 5)
 
 
 
 if __name__ == "__main__":
     run_tests()
+    p, q, p1, q1 = sorted([generate_prime_number(2**256, 2**512) for _ in range(4)])
