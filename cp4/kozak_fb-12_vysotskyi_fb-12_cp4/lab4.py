@@ -144,6 +144,24 @@ def verify(signed_text: Tuple[int, int], public_key: PublicKey) -> bool:
     return horner_power(signature, public_key.e, public_key.n) == open_text
 
 
+def send_key(k: int, my_private_key: PrivateKey, their_public_key: PublicKey) -> Tuple[int, int]:
+    n = my_private_key.p * my_private_key.q
+    s = horner_power(k, my_private_key.d, n)
+    s1 = horner_power(s, their_public_key.e, their_public_key.n)
+    k1 = horner_power(k, their_public_key.e, their_public_key.n)
+    return k1, s1
+
+
+def receive_key(key_message: Tuple[int, int], my_private_key: PrivateKey, their_public_key: PublicKey) -> int:
+    n = my_private_key.p * my_private_key.q
+    k1, s1 = key_message
+    k = horner_power(k1, my_private_key.d, n)
+    s = horner_power(s1, my_private_key.d, n)
+    if horner_power(s, their_public_key.e, their_public_key.n) == k:
+        return k
+    return 0
+
+
 def run_tests():
     assert distribute_number(13)[0] == 3
     assert distribute_number(13)[1] == 2
@@ -201,4 +219,4 @@ if __name__ == "__main__":
 
     k = randint(1, p*q-1)
     print(f"A згенерував певний ключ k={k}")
-    
+
