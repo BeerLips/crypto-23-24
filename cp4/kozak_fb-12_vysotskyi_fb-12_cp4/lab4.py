@@ -116,7 +116,7 @@ def generate_prime_number(lowest: int, highest: int) -> int:
             return p
 
 
-def generate_keys_from_2_prime_numbers(p: int, q: int, e=2**16+1) -> Tuple[PrivateKey, PublicKey]:
+def generate_key_pair(p: int, q: int, e=2 ** 16 + 1) -> Tuple[PrivateKey, PublicKey]:
     n = p*q
     euler = (p-1)*(q-1)
 
@@ -131,6 +131,17 @@ def encrypt(open_text: int, public_key: PublicKey) -> int:
 def decrypt(encrypted_text: int, private_key: PrivateKey) -> int:
     n = private_key.p * private_key.q
     return horner_power(encrypted_text, private_key.d, n)
+
+
+def sign(open_text: int, private_key: PrivateKey) -> Tuple[int, int]:
+    n = private_key.p * private_key.q
+    signature = horner_power(open_text, private_key.d, n)
+    return open_text, signature
+
+
+def verify(signed_text: Tuple[int, int], public_key: PublicKey) -> bool:
+    open_text, signature = signed_text
+    return horner_power(signature, public_key.e, public_key.n) == open_text
 
 
 def run_tests():
@@ -156,7 +167,7 @@ def run_tests():
     print("test_prime_miller_rabin works fine")
     assert generate_prime_number(2, 5) in (2, 3, 5)
 
-    prk, puk = generate_keys_from_2_prime_numbers(11, 41, 7)
+    prk, puk = generate_key_pair(11, 41, 7)
     print(prk, puk)
     assert encrypt(4, puk) == 148
 
@@ -164,7 +175,7 @@ def run_tests():
 if __name__ == "__main__":
     run_tests()
     p, q, p1, q1 = sorted([generate_prime_number(2**256, 2**512) for _ in range(4)])
-    private_key, public_key = generate_keys_from_2_prime_numbers(p, q)
+    private_key, public_key = generate_key_pair(p, q)
 
     #print(p, q, p*q)
     print("Guh")
