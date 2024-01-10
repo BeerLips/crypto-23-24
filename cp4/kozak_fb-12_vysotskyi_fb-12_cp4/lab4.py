@@ -148,10 +148,10 @@ def run_tests():
     assert distribute_number(13)[0] == 3
     assert distribute_number(13)[1] == 2
     assert distribute_number(100)[1] == 0
-    print("distribute_number works fine")
+
     assert horner_power(10, 2, 101) == 100
     assert horner_power(4, 7, 451) == 148
-    print("horner_power works fine")
+
     assert test_prime_miller_rabin(3)
     assert not test_prime_miller_rabin(4)
     assert not test_prime_miller_rabin(111)
@@ -164,7 +164,7 @@ def run_tests():
     assert test_prime_miller_rabin(28871271685163)
     assert test_prime_miller_rabin(53982894593057)
     assert test_prime_miller_rabin(2**16+1)
-    print("test_prime_miller_rabin works fine")
+
     assert generate_prime_number(2, 5) in (2, 3, 5)
 
     prk, puk = generate_key_pair(11, 41, 7)
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     private_key_b, public_key_b = generate_key_pair(p1, q1)
 
     m = randint(1, p*q-1)
-    print(f"Згенеровано повідомлення M={m}")
+    print(f"Згенеровано повідомлення M={m}", end="\n\n")
 
     m_encrypted_by_a = encrypt(m, public_key_b)  # A шифрує за відкритим ключем B
     print(f"A зашифрував повідомлення відкритим ключем B, і отримав C={m_encrypted_by_a}")
@@ -188,3 +188,17 @@ if __name__ == "__main__":
     m_encrypted_by_b = encrypt(m, public_key_a)  # B, навпаки, шифрує за відкритим ключем A
     print(f"B зашифрував повідомлення відкритим ключем A, і отримав C={m_encrypted_by_b}")
     print(f"A розшифрував повідомлення своїм закритим ключем і отримав M={decrypt(m_encrypted_by_b, private_key_a)}")
+
+    print()
+
+    m_signed_by_a = sign(m, private_key_a)
+    print(f"A підписав повідомлення, і отримал S={m_signed_by_a[1]}")
+    print(f"B перевірив підпис з результатом {verify(m_signed_by_a, public_key_a)}")
+
+    m_signed_by_b = sign(m, private_key_b)
+    print(f"B підписав повідомлення, і отримал S={m_signed_by_b[1]}")
+    print(f"A перевірив підпис з результатом {verify(m_signed_by_b, public_key_b)}")
+
+    k = randint(1, p*q-1)
+    print(f"A згенерував певний ключ k={k}")
+    
