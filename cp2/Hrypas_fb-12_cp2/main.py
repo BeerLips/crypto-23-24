@@ -37,7 +37,9 @@ def vigenere_encrypt(filename, out_filename, cypher, alphabet, print_out=True, w
         cyphertext += alphabet[(alphabet.index(cleartext[i])  + alphabet.index(adj_cypher[i])) % len(alphabet)]
 
     if print_out == True:
+        
         print(cyphertext)
+        
 
     if write_file == True:
         with open(out_filename, "w") as file:
@@ -104,6 +106,7 @@ def get_vigenere_key(cleartext_letter_prob, cyphertext_letter_prob, alphabet):
 
     for i in key:
         print(i.ljust(3, " "), end="")
+        
     print("")
     for i in range(len(key)):
         print(str(i).ljust(3, " "), end="")
@@ -149,14 +152,16 @@ def main():
     alphabet = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
     alphabet = [i for i in alphabet]
     filename = "cleartext.txt"
-    key2 = "из"
-    key3 = "воз"
-    key4 = "раст"
-    key5 = "еряша"
-    key_big = "чашкаиложкаичай"
-    key_big_big = "оченьнеимовернобольшойключ"
-    cyphertext = vigenere_encrypt(filename, "test", key_big_big, alphabet, print_out=False)
+    keys = ["из", "воз",  "раст",  "еряша",  "чашкаиложкаичай",  "оченьнеимовернобольшойключ"]
+    
 
+
+    for i in range(len(keys)):
+        cyphertext = vigenere_encrypt(filename, f"test{i}", keys[i], alphabet, print_out=False, write_file=True)
+        with open(f"test{i}", "r") as file:
+            enc_data = file.read()
+        print(f"compliance index for key of len {len(keys[i])} is {compliance_index(enc_data, alphabet)}")
+    
     with open(filename, "r") as file:
         text = file.read()
 
@@ -179,11 +184,15 @@ def main():
         key2_splitted = split_text(work_text, i)
         print(f"{i}: ",compliance_index(key2_splitted[0], alphabet))
 
+
+
+
     work_text = [i for i in work_text if i in alphabet]
     # print(work_text)
     choise =  ""
     while choise != "-":
         prob = get_vigenere_prob(work_text, alphabet, 14, letter_probability)
+        print(prob)
         key = get_vigenere_key(letter_probability, prob, alphabet)
         choise = input("to print small part of text enter p, to continue enter c, to exit enter -: ")
         if choise == "p":
