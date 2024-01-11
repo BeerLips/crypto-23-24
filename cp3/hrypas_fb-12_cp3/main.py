@@ -43,7 +43,6 @@ def find_reversed(a, b, n):
     d = gcd(a, n)
     if d == 1:
         return [ (pow(a, -1, n) * b) % n]
-
     if b%d:
         return []
 
@@ -163,12 +162,13 @@ def affine_bigram_dec(filename, alphabet, good_bigrams):
                     if (a, b) in used_pairs:
                         continue
                     used_pairs.append((a, b))
-
-
+                    
                     if   ideal_entropy - 0.1 <= shannon(dec_text) <= ideal_entropy + 0.1:
                         print("possible solution: a = {}, b = {}".format(a, b))
                         print(dec_text[:50])
-
+                    
+    print(len(used_pairs))
+    print(used_pairs)
     return
 
 def main():
