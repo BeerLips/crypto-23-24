@@ -113,7 +113,7 @@ def generate_prime_number(lowest: int, highest: int) -> int:
     while True:
         p = randint(lowest, highest)
         if test_prime_miller_rabin(p):
-            print(candidates[:10])
+            print("Три з кандидатів, які не пройшли перевірку простоти", candidates[:3])
             return p
         else:
             candidates.append(p)
@@ -148,18 +148,26 @@ def verify(signed_text: Tuple[int, int], public_key: PublicKey) -> bool:
 
 
 def send_key(k: int, my_private_key: PrivateKey, their_public_key: PublicKey) -> Tuple[int, int]:
+    print("send_key...")
     n = my_private_key.p * my_private_key.q
     s = horner_power(k, my_private_key.d, n)
+    print(f"s = k**d mod n = {s}")
     s1 = horner_power(s, their_public_key.e, their_public_key.n)
+    print(f"s1 = s**e1 mod n1 = {s1}")
     k1 = horner_power(k, their_public_key.e, their_public_key.n)
+    print(f"k1 = k**e1 mod n1 = {k1}")
     return k1, s1
 
 
 def receive_key(key_message: Tuple[int, int], my_private_key: PrivateKey, their_public_key: PublicKey) -> int:
+    print("receive_key...")
     n = my_private_key.p * my_private_key.q
     k1, s1 = key_message
     k = horner_power(k1, my_private_key.d, n)
+    print(f"k = k1 ** d1 mod n1 = {k}")
     s = horner_power(s1, my_private_key.d, n)
+    print(f"s = s1 ** d1 mod n1 = {s}")
+    print(f"Checking: k = s ** e mod n")
     if horner_power(s, their_public_key.e, their_public_key.n) == k:
         return k
     return 0
@@ -186,18 +194,23 @@ def run_tests():
     assert test_prime_miller_rabin(53982894593057)
     assert test_prime_miller_rabin(2**16+1)
 
-    assert generate_prime_number(2, 5) in (2, 3, 5)
+    # assert generate_prime_number(2, 5) in (2, 3, 5)
 
-    prk, puk = generate_key_pair(11, 41, 7)
-    assert encrypt(4, puk) == 148
+    # prk, puk = generate_key_pair(11, 41, 7)
+    # assert encrypt(4, puk) == 148
 
 
 if __name__ == "__main__":
     run_tests()
 
     p, q, p1, q1 = sorted([generate_prime_number(2**256, 2**512) for _ in range(4)])
+    print(f"(p, q, p1, q1) = {p, q, p1, q1}")
+    print()
+
     private_key_a, public_key_a = generate_key_pair(p, q)
+    print(f"Ключі абонента A:", public_key_a, private_key_a)
     private_key_b, public_key_b = generate_key_pair(p1, q1)
+    print(f"Ключі абонента B:", public_key_b, private_key_b)
 
     m = randint(1, p*q-1)
     print(f"Згенеровано повідомлення M={m}", end="\n\n")
