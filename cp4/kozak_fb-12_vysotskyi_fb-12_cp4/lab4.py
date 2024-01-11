@@ -109,11 +109,14 @@ def test_prime_miller_rabin(prime_candidate) -> bool:
 
 
 def generate_prime_number(lowest: int, highest: int) -> int:
-
+    candidates = []
     while True:
         p = randint(lowest, highest)
         if test_prime_miller_rabin(p):
+            print(candidates[:10])
             return p
+        else:
+            candidates.append(p)
 
 
 def generate_key_pair(p: int, q: int, e=2 ** 16 + 1) -> Tuple[PrivateKey, PublicKey]:
@@ -210,11 +213,11 @@ if __name__ == "__main__":
     print()
 
     m_signed_by_a = sign(m, private_key_a)
-    print(f"A підписав повідомлення, і отримал S={m_signed_by_a[1]}")
+    print(f"A підписав повідомлення, і отримав S={m_signed_by_a[1]}")
     print(f"B перевірив підпис з результатом {verify(m_signed_by_a, public_key_a)}")
 
     m_signed_by_b = sign(m, private_key_b)
-    print(f"B підписав повідомлення, і отримал S={m_signed_by_b[1]}")
+    print(f"B підписав повідомлення, і отримав S={m_signed_by_b[1]}")
     print(f"A перевірив підпис з результатом {verify(m_signed_by_b, public_key_b)}")
 
     print()
