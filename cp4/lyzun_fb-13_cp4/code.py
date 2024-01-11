@@ -51,6 +51,8 @@ def GenerateKeyPair(p, q):
     e = (2**16) + 1
     f = (p-1)*(q-1)
     d = inverted(e, f)
+    if d<0:
+        d +=f
     public_key = [n, e]
     private_key = d
     return public_key, private_key
@@ -111,6 +113,10 @@ print("Абонент А підписав повідомлення: "+str(S))
 print("Абонент B перевірив підпис: "+str(Verify(M, S, public_keyA)))
 k = randint(0, public_keyB[0])
 print("Секретний ключ k: "+str(k))
+while public_keyA[0]>public_keyB[0]:
+    p = RandomPrime()
+    q = RandomPrime()
+    public_keyA, dA = GenerateKeyPair(p, q)
 k1, S1 = SendKey(k, dA, public_keyA[0], public_keyB)
 print("Абонент А відправив секретний ключ k: "+str(k1)+" "+str(S1))
 verification, kk = ReceiveKey(k1, S1, dB, public_keyB[0], public_keyA)
